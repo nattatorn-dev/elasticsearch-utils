@@ -1,6 +1,5 @@
 import axios, { AxiosResponse } from 'axios';
 import bunyan from 'bunyan';
-import * as dotenv from 'dotenv';
 
 interface IndexPatternAttributes {
   title: string;
@@ -21,19 +20,23 @@ interface Field {
   conflictDescriptions: Record<string, string>;
 }
 
-async function fetchIndexPattern(indexPatternId: string): Promise<IndexPattern> {
+async function fetchIndexPattern(kibanaUrl: string, indexPatternId: string): Promise<IndexPattern> {
   const indexPattern = await axios.get<unknown, AxiosResponse<IndexPattern>>(
-    `${process.env.KIBANA_BASE_URL}/api/saved_objects/index-pattern/${indexPatternId}`
+    `${kibanaUrl}/api/saved_objects/index-pattern/${indexPatternId}`
   );
 
   return indexPattern.data;
+}
+
+function findConflictType(field: Field) {
+  return field.type === 'conflict';
 }
 
 function getConflictFields(indexPattern: IndexPattern): Field[] {
   const attributes = indexPattern.attributes;
   const fields = JSON.parse(attributes.fields) as Field[];
 
-  const conflictTypeField = fields.filter((field) => field.type === 'conflict');
+  const conflictTypeField = fields.filter(findConflictType);
 
   return conflictTypeField;
 }
@@ -43,26 +46,35 @@ function getIndexPatternName(indexPattern: IndexPattern): string {
   return name;
 }
 
-function printField(log: bunyan, fields: Field[]) {
+function printField(fields: Field[]) {
   const conflict = fields.map((field) => ({
     name: field.name,
     conflictDescriptions: field.conflictDescriptions,
   }));
 
-  log.info({ conflict });
+  console.log(JSON.stringify(conflict));
 }
 
 async function main() {
-  dotenv.config();
+  const [KIBANA_BASE_URL, INDEX_PATTERN_ID] = process.argv.slice(2);
+
+  if (!KIBANA_BASE_URL) {
+    throw new Error('KIBANA_BASE_URL not found');
+  }
+
+  if (!INDEX_PATTERN_ID) {
+    throw new Error('INDEX_PATTERN_ID not found');
+  }
+
   const log = bunyan.createLogger({ name: 'elasticsearch-tool' });
-  const indexPatternId = process.env.INDEX_PATTERN_ID;
-  const indexPattern = await fetchIndexPattern(indexPatternId);
+  const indexPattern = await fetchIndexPattern(KIBANA_BASE_URL, INDEX_PATTERN_ID);
+
   const indexPatternName = getIndexPatternName(indexPattern);
   log.debug({ event: 'get_index_pattern_name', indexPatternName });
 
   const fields = getConflictFields(indexPattern);
 
-  printField(log, fields);
+  printField(fields);
 }
 
 (async () => {
