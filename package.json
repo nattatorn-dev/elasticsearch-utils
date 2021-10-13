@@ -1,24 +1,23 @@
 {
   "name": "es-help",
-  "version": "1.0.0",
-  "description": "",
-  "main": "dist/src/index.js",
+  "version": "1.0.8",
+  "main": "./lib/index.js",
+  "module": "./lib/index.d.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "ts-node ./src/index.ts",
-    "start:prod": "npm run build && node ./dist/src/index.js",
-    "build": "npx tsc",
+    "start": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts",
+    "create": "npm run build && npm run test",
+    "build": "tsc -p .",
+    "local": "npm i -g && es-help",
+    "refresh": "rm -rf ./node_modules ./package-lock.json && npm install",
     "start:dev": "./node_modules/nodemon/bin/nodemon.js --quiet"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/bunyan": "^1.8.7",
     "@types/node": "^16.4.1",
     "@typescript-eslint/eslint-plugin": "^4.28.4",
     "@typescript-eslint/parser": "^4.28.4",
-    "bunyan": "^1.8.15",
     "eslint": "^7.31.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^3.4.0",
@@ -29,5 +28,8 @@
   },
   "dependencies": {
     "axios": "^0.23.0"
+  },
+  "bin": {
+    "es-help": "./lib/index.js"
   }
 }

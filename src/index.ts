@@ -1,5 +1,4 @@
 import axios, { AxiosResponse } from 'axios';
-import bunyan from 'bunyan';
 
 interface IndexPatternAttributes {
   title: string;
@@ -66,12 +65,7 @@ async function main() {
     throw new Error('INDEX_PATTERN_ID not found');
   }
 
-  const log = bunyan.createLogger({ name: 'elasticsearch-tool' });
   const indexPattern = await fetchIndexPattern(KIBANA_BASE_URL, INDEX_PATTERN_ID);
-
-  const indexPatternName = getIndexPatternName(indexPattern);
-  log.debug({ event: 'get_index_pattern_name', indexPatternName });
-
   const fields = getConflictFields(indexPattern);
 
   printField(fields);
